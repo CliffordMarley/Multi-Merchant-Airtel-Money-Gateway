@@ -1,0 +1,26 @@
+{
+  "name": "internal_airtel_money_gateway",
+  "version": "1.0.0",
+  "description": "Middleware for Allowing Multiple Merchants to use the Airtel Money API without haveing to individualy integrate.",
+  "main": "server.js",
+  "scripts": {
+    "test": "run dev"
+  },
+  "keywords": [
+    "AirtelMoney",
+    "NodeJS",
+    "Maxiko",
+    "MlimiPay",
+    "API"
+  ],
+  "author": "Clifford Mwale",
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "^1.20.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.1",
+    "express": "^4.18.1",
+    "mysql": "^2.18.1",
+    "node-fetch": "^2.6.1"
+  }
+}
