@@ -3,6 +3,8 @@ const TransactionModel = require('../Models/Transaction.Model')
 const TransactionHelper = require('../Helpers/Transaction.Helper')
 const MerchantModel = require('../Models/Merchant.Model')
 const {notEmpty} = require("../Helpers/Validation.Helper")
+const fetch = require('node-fetch')
+
 
 module.exports = class{
     //Compare this snippet from Routes\Transaction.Routes.js:
@@ -102,6 +104,104 @@ module.exports = class{
         }catch(err){
             console.log(err.message)
         }
+    }
+
+    async MobiPayTransaction(req, res){
+        const data = req.body
+        //console.log(data)
+        try{
+            
+            const merchantReference = await TransactionHelper.generateTransactionId()
+            const payload = {
+                merchantId:process.env.MOBIPAY_MERCHANT_CODE,
+                amount:data.amount,
+                paymentOptionId:data.walletProvider,
+                customerPhone: "0"+data.msisdn.substring(data.msisdn.length - 9),
+                currency:"MWK",
+                merchantReference,
+            }
+            res.json({
+                'status':'success',
+                'message':"Transaction initatiated!"
+            })
+            console.log(payload)
+            const options = {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            }
+            console.log('Pushing Transaction...')
+            let response = await fetch(process.env.MOBIPAY_URL,options )
+            if(response.status == 200){
+                response = await response.json()
+                console.log(response)
+                const payload = {
+                    'txn_ref':data.txn_ref,
+                    'status':'SUCCESS',
+                }
+                await this.PostCallback(payload)   
+            }else{
+                let hourlyCount = 0;
+                let intervalFunc = setInterval( async()=>{
+                    if(hourlyCount < 24){
+                        try{ 
+                            const payload = {
+                                'txn_ref':data.txn_ref,
+                                'status':'FAILED',
+                            }
+                            await this.PostCallback(payload)
+                            clearInterval(intervalFunc)
+                        }catch(err){
+                            console.log(err)
+                        }
+                    }else{
+                        clearInterval(intervalFunc)
+                    }
+                    hourlyCount++
+                },1800000)
+                
+            }
+        }catch(err){
+            console.log(err)
+            console.log("Error Name: %s\nError: %s",err.name, err.message)
+            const payload = {
+                'txn_ref':data.txn_ref,
+                'status':'FAILED',
+            }
+            await this.PostCallback(payload)
+        }
+    }
+
+    PostCallback(data){
+       return new Promise((resolve, reject)=>{
+            const options = {
+                method:"POST",
+                headers:{
+                    'Content-Type':'application/json'
+                },
+                body:JSON.stringify(data)
+            }
+            fetch('http://localhost/milatho-lite/app/transactions/ipn.php', options)
+            .then(response=>{
+                if(response.status == 200){
+                    console.log(response.json())
+                    console.log('Callback sent succesfully!')
+                    //Clear Interval loop
+                    resolve('OK')
+                }else{
+                    console.log('Callback failed to post!\n\nRetrying in 1 hour...') 
+                    reject('ERROR')
+                }
+            }).catch(err=>{
+                console.log(err.message)
+                console.log('Callback failed to post!\n\nRetrying in 1 hour...') 
+                reject('ERROR')
+
+            })    
+          
+       })
     }
 
    

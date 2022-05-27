@@ -10,6 +10,6 @@ module.exports = router=>{
 
     router.post('/transactions', new TransactionController().InitiateTransaction);
     router.post('/transactions/ipn', new TransactionController().InstantPaymentNotification);
-
+    router.post('/transactions/malipo', new TransactionController().MobiPayTransaction)
     return router
 }

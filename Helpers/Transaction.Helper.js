@@ -3,7 +3,7 @@ const TransactionModel = require('../Models/Transaction.Model')
 
 module.exports = class{
 
-    async generateTransactionId(){
+    static async generateTransactionId(){
         //Generate new 14 character TransactionId with prefix of 'TXN'
         return new Promise((resolve, reject)=>{
                         
