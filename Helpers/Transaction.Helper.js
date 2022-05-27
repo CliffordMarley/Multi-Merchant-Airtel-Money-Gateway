@@ -145,6 +145,35 @@ module.exports = class{
             console.log(err.message)
         }
     }
+
+    MalipoCallback(data){
+       return new Promise(async (resolve, reject)=>{
+            try{
+                const options = {
+                    method:"POST",
+                    headers:{
+                        'Content-Type':'application/json'
+                    },
+                    body:JSON.stringify(data)
+                }
+                let response = await fetch('http://localhost/milatho-lite/app/transactions/ipn.php', options)
+                response = await response.json()
+                if(response.status == 200){
+                    console.log(response.json())
+                    console.log('Callback sent succesfully!')
+                    //Clear Interval loop
+                    resolve('OK')
+                }else{
+                    console.log('Callback failed to post!\n\nRetrying in 1 hour...') 
+                    reject('ERROR')
+                }
+            }catch(err){
+                console.log(err.message)
+                console.log('Callback failed to post!\n\nRetrying in 1 hour...') 
+                reject('ERROR')
+            }
+       })
+    }
     
     normalizeNumber(msisdn){
         console.log(msisdn)

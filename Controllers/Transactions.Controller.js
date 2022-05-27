@@ -15,6 +15,8 @@ module.exports = class{
         this.merchant_model = new MerchantModel()
     }
 
+  
+
     InitiateTransaction = async (req, res)=>{
         try{
             let data = req.body
@@ -141,7 +143,7 @@ module.exports = class{
                     'txn_ref':data.txn_ref,
                     'status':'SUCCESS',
                 }
-                await this.PostCallback(payload)   
+                await this.txn_helper.MalipoCallback(payload)   
             }else{
                 let hourlyCount = 0;
                 let intervalFunc = setInterval( async()=>{
@@ -151,7 +153,7 @@ module.exports = class{
                                 'txn_ref':data.txn_ref,
                                 'status':'FAILED',
                             }
-                            await this.PostCallback(payload)
+                            await this.txn_helper.MalipoCallback(payload)
                             clearInterval(intervalFunc)
                         }catch(err){
                             console.log(err)
@@ -170,39 +172,15 @@ module.exports = class{
                 'txn_ref':data.txn_ref,
                 'status':'FAILED',
             }
-            await this.PostCallback(payload)
+            try{
+                await this.txn_helper.MalipoCallback(payload)
+            }catch(err){
+                console.log(err)
+            }
         }
     }
 
-    PostCallback(data){
-       return new Promise((resolve, reject)=>{
-            const options = {
-                method:"POST",
-                headers:{
-                    'Content-Type':'application/json'
-                },
-                body:JSON.stringify(data)
-            }
-            fetch('http://localhost/milatho-lite/app/transactions/ipn.php', options)
-            .then(response=>{
-                if(response.status == 200){
-                    console.log(response.json())
-                    console.log('Callback sent succesfully!')
-                    //Clear Interval loop
-                    resolve('OK')
-                }else{
-                    console.log('Callback failed to post!\n\nRetrying in 1 hour...') 
-                    reject('ERROR')
-                }
-            }).catch(err=>{
-                console.log(err.message)
-                console.log('Callback failed to post!\n\nRetrying in 1 hour...') 
-                reject('ERROR')
-
-            })    
-          
-       })
-    }
+     
 
    
 }
